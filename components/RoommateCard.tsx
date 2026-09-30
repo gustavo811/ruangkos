@@ -2,6 +2,7 @@ import React from 'react';
 import { StyleSheet, Text, View, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Roommate } from '../types';
+import { useAuth } from '../context/AuthContext';
 import { COLORS, RADIUS, SHADOWS, SPACING } from '../constants/theme';
 
 interface RoommateCardProps {
@@ -11,6 +12,9 @@ interface RoommateCardProps {
 }
 
 export const RoommateCard: React.FC<RoommateCardProps> = ({ roommate, rank, onDelete }) => {
+  const { user } = useAuth();
+  const isMe = user?.name?.toLowerCase() === roommate.name.toLowerCase();
+
   const getRankBadge = (r?: number) => {
     if (r === 1) return { label: '🏆 #1 Master Kos', bg: '#FEF3C7', color: '#D97706' };
     if (r === 2) return { label: '🥈 #2 Rajin', bg: '#F1F5F9', color: '#475569' };
@@ -21,7 +25,7 @@ export const RoommateCard: React.FC<RoommateCardProps> = ({ roommate, rank, onDe
   const rankInfo = getRankBadge(rank);
 
   return (
-    <View style={styles.card}>
+    <View style={[styles.card, isMe && styles.cardMe]}>
       {/* Left Avatar */}
       <View style={[styles.avatarCircle, { backgroundColor: roommate.avatarColor }]}>
         <Text style={styles.avatarText}>{roommate.name[0]}</Text>
@@ -31,6 +35,11 @@ export const RoommateCard: React.FC<RoommateCardProps> = ({ roommate, rank, onDe
       <View style={styles.infoContainer}>
         <View style={styles.nameRow}>
           <Text style={styles.name}>{roommate.name}</Text>
+          {isMe && (
+            <View style={styles.meBadge}>
+              <Text style={styles.meText}>Kamu</Text>
+            </View>
+          )}
           {roommate.role === 'Ketua Kos' && (
             <View style={styles.leaderBadge}>
               <Text style={styles.leaderText}>Ketua</Text>
@@ -81,6 +90,23 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: COLORS.surfaceBorder,
     ...SHADOWS.small,
+  },
+  cardMe: {
+    borderColor: COLORS.primary,
+    borderWidth: 1.5,
+    backgroundColor: '#FAF9FF',
+  },
+  meBadge: {
+    backgroundColor: '#DCFCE7',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: RADIUS.sm,
+    marginRight: 6,
+  },
+  meText: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: '#166534',
   },
   avatarCircle: {
     width: 48,

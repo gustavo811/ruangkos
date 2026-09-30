@@ -53,3 +53,41 @@ export interface AppSettings {
   kosName: string;
   roomNumber: string;
 }
+
+export interface AuthUser {
+  id: string;
+  name: string;
+  email: string;
+  role: 'Ketua Kos' | 'Penghuni';
+  roomNumber: string;
+  kosName: string;
+  avatarColor: string;
+  phone?: string;
+  createdAt: string;
+}
+
+export interface LoginCredentials {
+  email: string;
+  password: string;
+  rememberMe?: boolean;
+}
+
+export interface RegisterCredentials {
+  name: string;
+  email: string;
+  password: string;
+  role: 'Ketua Kos' | 'Penghuni';
+  roomNumber: string;
+  kosName: string;
+  phone?: string;
+}
+
+export interface StorageAuditItem {
+  key: string;
+  storageType: 'Expo SecureStore' | 'AsyncStorage';
+  isEncrypted: boolean;
+  description: string;
+  exists: boolean;
+  preview: string;
+}
+

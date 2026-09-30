@@ -63,6 +63,9 @@ export const ProjectInfoModal: React.FC<ProjectInfoModalProps> = ({ visible, onC
             {/* Core Features */}
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>⚡ Fitur Utama</Text>
+              <FeatureRow icon="shield-checkmark-outline" title="Autentikasi & Akun" desc="Login & Register dengan peran Ketua Kos / Penghuni" />
+              <FeatureRow icon="key-outline" title="Secure Storage (Expo SecureStore)" desc="Enkripsi hardware token sesi & kredensial login" />
+              <FeatureRow icon="file-tray-full-outline" title="Local Storage (AsyncStorage)" desc="Penyimpanan data offline, profil, jadwal, & riwayat" />
               <FeatureRow icon="calendar-outline" title="Jadwal Piket" desc="Jadwal kebersihan harian & mingguan" />
               <FeatureRow icon="checkbox-outline" title="Checklist Tugas" desc="Tandai tugas yang sudah selesai" />
               <FeatureRow icon="alarm-outline" title="Pengingat Otomatis" desc="Notifikasi saat jadwal kebersihan tiba" />
