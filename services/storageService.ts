@@ -146,13 +146,21 @@ export async function getStorageAudit(): Promise<StorageAuditItem[]> {
 
   // 1. Audit SecureStore
   const token = await SecureStorage.getItem(STORAGE_KEYS.SECURE_TOKEN);
+  let tokenPreview = 'Belum tersimpan';
+  if (token) {
+    const isJwt = token.split('.').length === 3;
+    tokenPreview = isJwt 
+      ? `JWT: ${token.substring(0, 18)}... (HS256 Signed)` 
+      : `${token.substring(0, 16)}... (Encrypted)`;
+  }
+
   audit.push({
     key: STORAGE_KEYS.SECURE_TOKEN,
     storageType: 'Expo SecureStore',
     isEncrypted: true,
     description: 'Hardware Encrypted Auth Bearer Token (Keychain/Keystore)',
     exists: !!token,
-    preview: token ? `${token.substring(0, 16)}... (Encrypted)` : 'Belum tersimpan',
+    preview: tokenPreview,
   });
 
   const creds = await SecureStorage.getItem(STORAGE_KEYS.SECURE_CREDENTIALS);

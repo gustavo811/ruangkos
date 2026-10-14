@@ -18,8 +18,8 @@ import { COLORS, RADIUS, SHADOWS, SPACING } from '../../constants/theme';
 export default function AuthSectionOne() {
   const router = useRouter();
   const { login, quickLogin, rememberedEmail } = useAuth();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState(() => rememberedEmail || 'erling@ruangkos.id');
+  const [password, setPassword] = useState('password123');
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
   const [agreeTerms, setAgreeTerms] = useState(true);
@@ -28,13 +28,12 @@ export default function AuthSectionOne() {
 
   useEffect(() => {
     if (rememberedEmail) {
-      setEmail(rememberedEmail);
-      if (['erling@ruangkos.id', 'rex@ruangkos.id', 'fiona@ruangkos.id'].includes(rememberedEmail)) {
-        setPassword('password123');
-      }
-    } else {
-      setEmail('erling@ruangkos.id');
-      setPassword('password123');
+      queueMicrotask(() => {
+        setEmail(rememberedEmail);
+        if (['erling@ruangkos.id', 'rex@ruangkos.id', 'fiona@ruangkos.id'].includes(rememberedEmail)) {
+          setPassword('password123');
+        }
+      });
     }
   }, [rememberedEmail]);
 

@@ -1,7 +1,9 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import * as Haptics from 'expo-haptics';
-import { AuthUser, LoginCredentials, RegisterCredentials, StorageAuditItem } from '../types';
+import { AuthUser, JwtPayload, LoginCredentials, RegisterCredentials, StorageAuditItem } from '../types';
 import { SecureStorage, LocalStorage, STORAGE_KEYS, getStorageAudit } from '../services/storageService';
+import { ApiService } from '../services/apiService';
+import { decodeJwt, verifyJwt } from '../services/jwtService';
 
 export const DEMO_ACCOUNTS = [
   {
@@ -51,6 +53,7 @@ export const DEMO_ACCOUNTS = [
 interface AuthContextType {
   user: AuthUser | null;
   token: string | null;
+  decodedToken: JwtPayload | null;
   isLoading: boolean;
   rememberedEmail: string;
   login: (credentials: LoginCredentials) => Promise<{ success: boolean; error?: string }>;
@@ -116,9 +119,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
       }
 
+      // Validasi token JWT yang tersimpan
       if (secureToken && storedUser) {
-        setToken(secureToken);
-        setUser(storedUser);
+        const verification = verifyJwt(secureToken);
+        if (verification.valid) {
+          setToken(secureToken);
+          setUser(storedUser);
+        } else {
+          // Token kedaluwarsa atau tidak valid -> Bersihkan dari penyimpanan lokal
+          console.warn('[AuthProvider] Token JWT tersimpan tidak valid atau expired. Membersihkan sesi.');
+          await SecureStorage.deleteItem(STORAGE_KEYS.SECURE_TOKEN);
+          await LocalStorage.deleteItem(STORAGE_KEYS.LOCAL_USER);
+          setToken(null);
+          setUser(null);
+        }
       } else {
         setToken(null);
         setUser(null);
@@ -144,6 +158,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  /**
+   * Ketentuan 1: Saat login, aplikasi harus berhasil mendapatkan token dan menyimpannya.
+   */
   const login = async ({
     email,
     password,
@@ -154,25 +171,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const accounts =
         (await LocalStorage.getObject<any[]>(STORAGE_KEYS.LOCAL_REGISTERED_USERS)) ||
         DEMO_ACCOUNTS;
-      const found = accounts.find(
-        (account) =>
-          account.user.email.toLowerCase() === cleanEmail && account.password === password,
-      );
 
-      if (!found) {
+      // Akses Endpoint POST /api/v1/auth/login untuk autentikasi dan penerbitan JWT Token
+      const apiRes = await ApiService.login({ email: cleanEmail, password, rememberMe }, accounts);
+
+      if (!apiRes.success || !apiRes.token || !apiRes.data) {
         triggerHaptic('error');
-        return { success: false, error: 'Email atau kata sandi tidak cocok. Silakan periksa kembali.' };
+        return { 
+          success: false, 
+          error: apiRes.error || 'Email atau kata sandi tidak cocok. Silakan periksa kembali.' 
+        };
       }
 
-      const generatedToken = `rk_sec_${Date.now()}_${Math.random().toString(36).substring(2, 12)}`;
-      const sessionId = `sess_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
-      await SecureStorage.setItem(STORAGE_KEYS.SECURE_TOKEN, generatedToken);
-      await SecureStorage.setItem(STORAGE_KEYS.SECURE_SESSION_ID, sessionId);
+      const jwtToken = apiRes.token;
+      const authenticatedUser = apiRes.data.user;
+
+      // SIMPAN TOKEN KE DALAM PENYIMPANAN AMAN (Hardware-encrypted SecureStore)
+      await SecureStorage.setItem(STORAGE_KEYS.SECURE_TOKEN, jwtToken);
       await SecureStorage.setItem(
         STORAGE_KEYS.SECURE_CREDENTIALS,
         JSON.stringify({ email: cleanEmail, timestamp: Date.now() }),
       );
-      await LocalStorage.setObject(STORAGE_KEYS.LOCAL_USER, found.user);
+      await LocalStorage.setObject(STORAGE_KEYS.LOCAL_USER, authenticatedUser);
 
       if (rememberMe) {
         await LocalStorage.setItem(STORAGE_KEYS.LOCAL_REMEMBER_EMAIL, cleanEmail);
@@ -182,8 +202,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setRememberedEmail('');
       }
 
-      setUser(found.user);
-      setToken(generatedToken);
+      setUser(authenticatedUser);
+      setToken(jwtToken);
       triggerHaptic('success');
       return { success: true };
     } catch (error) {
@@ -205,34 +225,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         (await LocalStorage.getObject<any[]>(STORAGE_KEYS.LOCAL_REGISTERED_USERS)) ||
         DEMO_ACCOUNTS;
 
-      if (accounts.some((account) => account.user.email.toLowerCase() === cleanEmail)) {
+      // Akses Endpoint POST /api/v1/auth/register
+      const apiRes = await ApiService.register(data, accounts);
+
+      if (!apiRes.success || !apiRes.token || !apiRes.data) {
         triggerHaptic('warning');
         return {
           success: false,
-          error: 'Email ini sudah terdaftar. Silakan masuk menggunakan akun tersebut.',
+          error: apiRes.error || 'Gagal mendaftar akun baru',
         };
       }
 
-      const avatarColors = ['#6C5CE7', '#00B894', '#FF7675', '#0984E3', '#FDCB6E', '#10B981'];
-      const randomColor = avatarColors[Math.floor(Math.random() * avatarColors.length)];
-      const newUser: AuthUser = {
-        id: `user-${Date.now()}`,
-        name: data.name.trim(),
-        email: cleanEmail,
-        role: data.role,
-        roomNumber: data.roomNumber.trim() || 'Kamar Baru',
-        kosName: data.kosName.trim() || 'RuangKos',
-        avatarColor: randomColor,
-        phone: data.phone?.trim() || '',
-        createdAt: new Date().toISOString(),
-      };
+      const jwtToken = apiRes.token;
+      const newUser = apiRes.data.user;
+
       const updatedAccounts = [...accounts, { user: newUser, password: data.password }];
       await LocalStorage.setObject(STORAGE_KEYS.LOCAL_REGISTERED_USERS, updatedAccounts);
 
-      const generatedToken = `rk_sec_${Date.now()}_${Math.random().toString(36).substring(2, 12)}`;
-      const sessionId = `sess_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
-      await SecureStorage.setItem(STORAGE_KEYS.SECURE_TOKEN, generatedToken);
-      await SecureStorage.setItem(STORAGE_KEYS.SECURE_SESSION_ID, sessionId);
+      // Simpan JWT Token dan Data Pengguna ke SecureStorage & LocalStorage
+      await SecureStorage.setItem(STORAGE_KEYS.SECURE_TOKEN, jwtToken);
       await SecureStorage.setItem(
         STORAGE_KEYS.SECURE_CREDENTIALS,
         JSON.stringify({ email: cleanEmail, timestamp: Date.now() }),
@@ -241,7 +252,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       await LocalStorage.setItem(STORAGE_KEYS.LOCAL_REMEMBER_EMAIL, cleanEmail);
 
       setUser(newUser);
-      setToken(generatedToken);
+      setToken(jwtToken);
       setRememberedEmail(cleanEmail);
       triggerHaptic('success');
       return { success: true };
@@ -258,12 +269,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const quickLogin = async (email: string) =>
     login({ email, password: 'password123', rememberMe: true });
 
+  /**
+   * Ketentuan 2 & 3:
+   * 2. Token dikirimkan ke endpoint logout (Authorization: Bearer <token>)
+   * 3. Saat logout, token harus direfresh/dihapus dari penyimpanan lokal
+   */
   const logout = async () => {
     try {
+      const currentToken = token || (await SecureStorage.getItem(STORAGE_KEYS.SECURE_TOKEN));
+      
+      // Kirim token ke endpoint logout (revokasi sesi di server)
+      await ApiService.logout(currentToken);
+
+      // Hapus token dan data sesi dari penyimpanan lokal (SecureStore & AsyncStorage)
       await SecureStorage.deleteItem(STORAGE_KEYS.SECURE_TOKEN);
       await SecureStorage.deleteItem(STORAGE_KEYS.SECURE_CREDENTIALS);
       await SecureStorage.deleteItem(STORAGE_KEYS.SECURE_SESSION_ID);
       await LocalStorage.deleteItem(STORAGE_KEYS.LOCAL_USER);
+
       setUser(null);
       setToken(null);
       triggerHaptic('success');
@@ -274,11 +297,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const refreshSecurityAudit = async (): Promise<StorageAuditItem[]> => getStorageAudit();
 
+  const decodedToken = token ? decodeJwt(token)?.payload || null : null;
+
   return (
     <AuthContext.Provider
       value={{
         user,
         token,
+        decodedToken,
         isLoading,
         rememberedEmail,
         login,

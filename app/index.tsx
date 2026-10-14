@@ -3,7 +3,7 @@ import { View, Text, ActivityIndicator, StyleSheet } from 'react-native';
 import { Redirect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../context/AuthContext';
-import { COLORS, RADIUS, SHADOWS } from '../constants/theme';
+import { COLORS, SHADOWS } from '../constants/theme';
 
 export default function Index() {
   const { user, isLoading } = useAuth();

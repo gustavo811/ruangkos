@@ -91,3 +91,40 @@ export interface StorageAuditItem {
   preview: string;
 }
 
+export interface JwtHeader {
+  alg: string;
+  typ: string;
+}
+
+export interface JwtPayload {
+  sub: string;
+  email: string;
+  name: string;
+  role: 'Ketua Kos' | 'Penghuni';
+  roomNumber: string;
+  kosName: string;
+  iat: number;
+  exp: number;
+  iss: string;
+  aud: string;
+}
+
+export interface ApiLogItem {
+  id: string;
+  timestamp: string;
+  method: 'GET' | 'POST' | 'PUT' | 'DELETE';
+  endpoint: string;
+  authHeaderSent: boolean;
+  tokenSnippet?: string;
+  statusCode: number;
+  statusText: string;
+  details: string;
+}
+
+export interface ApiResponse<T = any> {
+  success: boolean;
+  data?: T;
+  error?: string;
+  token?: string;
+  statusCode: number;
+}

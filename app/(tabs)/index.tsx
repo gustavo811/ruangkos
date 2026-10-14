@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
-  StyleSheet, Text, View, ScrollView, Pressable, FlatList 
+  StyleSheet, Text, View, ScrollView, Pressable 
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Header } from '../../components/Header';
@@ -8,12 +8,33 @@ import { CleanlinessProgressCard } from '../../components/CleanlinessProgressCar
 import { TaskCard } from '../../components/TaskCard';
 import { AddTaskModal } from '../../components/AddTaskModal';
 import { useApp } from '../../context/AppContext';
+import { useAuth } from '../../context/AuthContext';
+import { ApiService } from '../../services/apiService';
 import { COLORS, RADIUS, SHADOWS, SPACING } from '../../constants/theme';
 import { DayOfWeek } from '../../types';
 
 export default function HomeScreen() {
   const { tasks, roommates, rotateWeeklySchedule, triggerNotification } = useApp();
+  const { token } = useAuth();
   const [modalVisible, setModalVisible] = useState(false);
+  const [jwtEndpointOk, setJwtEndpointOk] = useState<boolean | null>(null);
+
+  // Akses Endpoint Menu Utama: GET /api/v1/dashboard/overview dengan header Authorization: Bearer <token>
+  useEffect(() => {
+    let isMounted = true;
+    async function fetchMenuUtama() {
+      if (token) {
+        const response = await ApiService.getDashboardOverview(token);
+        if (isMounted) {
+          setJwtEndpointOk(response.success);
+        }
+      }
+    }
+    void fetchMenuUtama();
+    return () => {
+      isMounted = false;
+    };
+  }, [token]);
 
   // Get Current Day of Week in Indonesian
   const getCurrentDayIndo = (): DayOfWeek => {
@@ -42,6 +63,17 @@ export default function HomeScreen() {
       >
         {/* Progress & Overview Card */}
         <CleanlinessProgressCard onAddTask={() => setModalVisible(true)} />
+
+        {/* JWT Authorization Status Indicator */}
+        {jwtEndpointOk && (
+          <View style={styles.jwtBadgeContainer}>
+            <View style={styles.jwtBadgeDot} />
+            <Ionicons name="shield-checkmark" size={13} color="#10B981" style={{ marginRight: 6 }} />
+            <Text style={styles.jwtBadgeText}>
+              Menu Utama Terotorisasi JWT (Bearer Token Aktif)
+            </Text>
+          </View>
+        )}
 
         {/* Quick Action Bar */}
         <View style={styles.quickBar}>
@@ -256,6 +288,29 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 10,
     fontWeight: '800',
+  },
+  jwtBadgeContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#ECFDF5',
+    borderWidth: 1,
+    borderColor: '#A7F3D0',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: RADIUS.md,
+    marginBottom: SPACING.md,
+  },
+  jwtBadgeDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#10B981',
+    marginRight: 6,
+  },
+  jwtBadgeText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#065F46',
   },
   dutyName: {
     fontSize: 12,

@@ -4,7 +4,7 @@ export const COLORS = {
   primaryLight: '#A29BFE',
   primaryDark: '#4C3AE3',
   primaryGradient: ['#6C5CE7', '#8E7CFF'],
-  
+
   secondary: '#00B894', // Fresh Mint
   secondaryLight: '#55E6C1',
   secondaryDark: '#00896F',

@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { StyleSheet, Text, View, Pressable, Animated } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useApp } from '../context/AppContext';
@@ -6,7 +6,17 @@ import { COLORS, RADIUS, SHADOWS, SPACING } from '../constants/theme';
 
 export const NotificationBanner: React.FC = () => {
   const { activeNotification, dismissNotification } = useApp();
-  const slideAnim = React.useRef(new Animated.Value(-100)).current;
+  const [slideAnim] = useState(() => new Animated.Value(-100));
+
+  const hideBanner = React.useCallback(() => {
+    Animated.timing(slideAnim, {
+      toValue: -120,
+      duration: 300,
+      useNativeDriver: true,
+    }).start(() => {
+      dismissNotification();
+    });
+  }, [slideAnim, dismissNotification]);
 
   useEffect(() => {
     if (activeNotification && activeNotification.visible) {
@@ -25,17 +35,7 @@ export const NotificationBanner: React.FC = () => {
     } else {
       hideBanner();
     }
-  }, [activeNotification]);
-
-  const hideBanner = () => {
-    Animated.timing(slideAnim, {
-      toValue: -120,
-      duration: 300,
-      useNativeDriver: true,
-    }).start(() => {
-      dismissNotification();
-    });
-  };
+  }, [activeNotification, hideBanner, slideAnim]);
 
   if (!activeNotification || !activeNotification.visible) return null;
 
