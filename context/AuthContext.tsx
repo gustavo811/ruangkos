@@ -1,15 +1,14 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useEffect, useState } from 'react';
 import * as Haptics from 'expo-haptics';
 import { AuthUser, LoginCredentials, RegisterCredentials, StorageAuditItem } from '../types';
 import { SecureStorage, LocalStorage, STORAGE_KEYS, getStorageAudit } from '../services/storageService';
 
-// Default initial accounts for testing / evaluation
 export const DEMO_ACCOUNTS = [
   {
     user: {
-      id: 'user-budi',
-      name: 'Budi Santoso',
-      email: 'budi@ruangkos.id',
+      id: 'user-erling',
+      name: 'Erling Rascals',
+      email: 'erling@ruangkos.id',
       role: 'Ketua Kos' as const,
       roomNumber: 'Kamar 101',
       kosName: 'RuangKos Melati 21',
@@ -21,9 +20,9 @@ export const DEMO_ACCOUNTS = [
   },
   {
     user: {
-      id: 'user-agus',
-      name: 'Agus Pratama',
-      email: 'agus@ruangkos.id',
+      id: 'user-rex',
+      name: 'Rex',
+      email: 'rex@ruangkos.id',
       role: 'Penghuni' as const,
       roomNumber: 'Kamar 102',
       kosName: 'RuangKos Melati 21',
@@ -35,9 +34,9 @@ export const DEMO_ACCOUNTS = [
   },
   {
     user: {
-      id: 'user-siti',
-      name: 'Siti Rahma',
-      email: 'siti@ruangkos.id',
+      id: 'user-fiona',
+      name: 'Fiona',
+      email: 'fiona@ruangkos.id',
       role: 'Penghuni' as const,
       roomNumber: 'Kamar 203',
       kosName: 'RuangKos Melati 21',
@@ -66,76 +65,98 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [token, setToken] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [rememberedEmail, setRememberedEmail] = useState<string>('');
+  const [isLoading, setIsLoading] = useState(true);
+  const [rememberedEmail, setRememberedEmail] = useState('');
 
-  // Initial Bootstrap: Load token from SecureStore and user from LocalStorage
   useEffect(() => {
-    bootstrapAuth();
+    void bootstrapAuth();
   }, []);
 
   const bootstrapAuth = async () => {
     try {
-      // 1. Initialize registered users database if not existing
-      const existingAccounts = await LocalStorage.getObject<any[]>(STORAGE_KEYS.LOCAL_REGISTERED_USERS);
-      if (!existingAccounts || existingAccounts.length === 0) {
-        await LocalStorage.setObject(STORAGE_KEYS.LOCAL_REGISTERED_USERS, DEMO_ACCOUNTS);
-      }
+      const existingAccounts = await LocalStorage.getObject<any[]>(
+        STORAGE_KEYS.LOCAL_REGISTERED_USERS,
+      );
+      const customAccounts = (existingAccounts || []).filter(
+        (account) => ![
+          'user-budi',
+          'user-agus',
+          'user-siti',
+          'user-erling',
+          'user-rex',
+          'user-fiona',
+        ].includes(account.user.id),
+      );
+      await LocalStorage.setObject(
+        STORAGE_KEYS.LOCAL_REGISTERED_USERS,
+        [...DEMO_ACCOUNTS, ...customAccounts],
+      );
 
-      // 2. Load remembered email from LocalStorage
-      const savedEmail = await LocalStorage.getItem(STORAGE_KEYS.LOCAL_REMEMBER_EMAIL);
+      let savedEmail = await LocalStorage.getItem(STORAGE_KEYS.LOCAL_REMEMBER_EMAIL);
+      if (savedEmail === 'budi@ruangkos.id') savedEmail = 'erling@ruangkos.id';
+      if (savedEmail === 'agus@ruangkos.id') savedEmail = 'rex@ruangkos.id';
+      if (savedEmail === 'siti@ruangkos.id') savedEmail = 'fiona@ruangkos.id';
       if (savedEmail) {
+        await LocalStorage.setItem(STORAGE_KEYS.LOCAL_REMEMBER_EMAIL, savedEmail);
         setRememberedEmail(savedEmail);
       }
 
-      // 3. Read Secure Token from Expo SecureStore
       const secureToken = await SecureStorage.getItem(STORAGE_KEYS.SECURE_TOKEN);
-      
-      // 4. Read User Profile from LocalStorage (AsyncStorage)
-      const storedUser = await LocalStorage.getObject<AuthUser>(STORAGE_KEYS.LOCAL_USER);
+      let storedUser = await LocalStorage.getObject<AuthUser>(STORAGE_KEYS.LOCAL_USER);
+      if (storedUser) {
+        if (storedUser.email === 'budi@ruangkos.id' || storedUser.id === 'user-budi') {
+          storedUser = DEMO_ACCOUNTS[0].user;
+          await LocalStorage.setObject(STORAGE_KEYS.LOCAL_USER, storedUser);
+        } else if (storedUser.email === 'agus@ruangkos.id' || storedUser.id === 'user-agus') {
+          storedUser = DEMO_ACCOUNTS[1].user;
+          await LocalStorage.setObject(STORAGE_KEYS.LOCAL_USER, storedUser);
+        } else if (storedUser.email === 'siti@ruangkos.id' || storedUser.id === 'user-siti') {
+          storedUser = DEMO_ACCOUNTS[2].user;
+          await LocalStorage.setObject(STORAGE_KEYS.LOCAL_USER, storedUser);
+        }
+      }
 
       if (secureToken && storedUser) {
         setToken(secureToken);
         setUser(storedUser);
       } else {
-        // Not authenticated
         setToken(null);
         setUser(null);
       }
-    } catch (err) {
-      console.error('[AuthProvider] Bootstrap error:', err);
+    } catch (error) {
+      console.error('[AuthProvider] Bootstrap error:', error);
     } finally {
       setIsLoading(false);
     }
   };
 
-  /**
-   * Helper to trigger haptics
-   */
   const triggerHaptic = (type: 'success' | 'warning' | 'error') => {
     try {
       if (type === 'success') {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       } else if (type === 'warning') {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+        void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
       } else {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+        void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       }
     } catch {
-      // Safe fallback
+      // Haptics are optional on unsupported platforms.
     }
   };
 
-  /**
-   * Login Handler
-   */
-  const login = async ({ email, password, rememberMe = true }: LoginCredentials): Promise<{ success: boolean; error?: string }> => {
+  const login = async ({
+    email,
+    password,
+    rememberMe = true,
+  }: LoginCredentials): Promise<{ success: boolean; error?: string }> => {
     try {
       const cleanEmail = email.trim().toLowerCase();
-      const accounts = (await LocalStorage.getObject<any[]>(STORAGE_KEYS.LOCAL_REGISTERED_USERS)) || DEMO_ACCOUNTS;
-
+      const accounts =
+        (await LocalStorage.getObject<any[]>(STORAGE_KEYS.LOCAL_REGISTERED_USERS)) ||
+        DEMO_ACCOUNTS;
       const found = accounts.find(
-        acc => acc.user.email.toLowerCase() === cleanEmail && acc.password === password
+        (account) =>
+          account.user.email.toLowerCase() === cleanEmail && account.password === password,
       );
 
       if (!found) {
@@ -143,19 +164,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return { success: false, error: 'Email atau kata sandi tidak cocok. Silakan periksa kembali.' };
       }
 
-      // Generate Secure Bearer Token
       const generatedToken = `rk_sec_${Date.now()}_${Math.random().toString(36).substring(2, 12)}`;
       const sessionId = `sess_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
-
-      // 1. SAVE SENSITIVE DATA IN SECURE STORE (expo-secure-store)
       await SecureStorage.setItem(STORAGE_KEYS.SECURE_TOKEN, generatedToken);
       await SecureStorage.setItem(STORAGE_KEYS.SECURE_SESSION_ID, sessionId);
       await SecureStorage.setItem(
         STORAGE_KEYS.SECURE_CREDENTIALS,
-        JSON.stringify({ email: cleanEmail, timestamp: Date.now() })
+        JSON.stringify({ email: cleanEmail, timestamp: Date.now() }),
       );
-
-      // 2. SAVE NON-SENSITIVE DATA IN LOCAL STORAGE (AsyncStorage)
       await LocalStorage.setObject(STORAGE_KEYS.LOCAL_USER, found.user);
 
       if (rememberMe) {
@@ -170,30 +186,35 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setToken(generatedToken);
       triggerHaptic('success');
       return { success: true };
-    } catch (err: any) {
-      console.error('[AuthProvider] Login error:', err);
+    } catch (error) {
+      console.error('[AuthProvider] Login error:', error);
       triggerHaptic('error');
-      return { success: false, error: err?.message || 'Terjadi kesalahan saat masuk' };
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Terjadi kesalahan saat masuk',
+      };
     }
   };
 
-  /**
-   * Register Handler
-   */
-  const register = async (data: RegisterCredentials): Promise<{ success: boolean; error?: string }> => {
+  const register = async (
+    data: RegisterCredentials,
+  ): Promise<{ success: boolean; error?: string }> => {
     try {
       const cleanEmail = data.email.trim().toLowerCase();
-      const accounts = (await LocalStorage.getObject<any[]>(STORAGE_KEYS.LOCAL_REGISTERED_USERS)) || DEMO_ACCOUNTS;
+      const accounts =
+        (await LocalStorage.getObject<any[]>(STORAGE_KEYS.LOCAL_REGISTERED_USERS)) ||
+        DEMO_ACCOUNTS;
 
-      // Check if email already registered
-      if (accounts.some(acc => acc.user.email.toLowerCase() === cleanEmail)) {
+      if (accounts.some((account) => account.user.email.toLowerCase() === cleanEmail)) {
         triggerHaptic('warning');
-        return { success: false, error: 'Email ini sudah terdaftar. Silakan masuk menggunakan akun tersebut.' };
+        return {
+          success: false,
+          error: 'Email ini sudah terdaftar. Silakan masuk menggunakan akun tersebut.',
+        };
       }
 
       const avatarColors = ['#6C5CE7', '#00B894', '#FF7675', '#0984E3', '#FDCB6E', '#10B981'];
       const randomColor = avatarColors[Math.floor(Math.random() * avatarColors.length)];
-
       const newUser: AuthUser = {
         id: `user-${Date.now()}`,
         name: data.name.trim(),
@@ -205,29 +226,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         phone: data.phone?.trim() || '',
         createdAt: new Date().toISOString(),
       };
-
-      const newAccountEntry = {
-        user: newUser,
-        password: data.password,
-      };
-
-      // 1. Update Registered Users in LocalStorage
-      const updatedAccounts = [...accounts, newAccountEntry];
+      const updatedAccounts = [...accounts, { user: newUser, password: data.password }];
       await LocalStorage.setObject(STORAGE_KEYS.LOCAL_REGISTERED_USERS, updatedAccounts);
 
-      // 2. Automatically Log in with Secure Token Generation
       const generatedToken = `rk_sec_${Date.now()}_${Math.random().toString(36).substring(2, 12)}`;
       const sessionId = `sess_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
-
-      // Save sensitive token in SecureStore
       await SecureStorage.setItem(STORAGE_KEYS.SECURE_TOKEN, generatedToken);
       await SecureStorage.setItem(STORAGE_KEYS.SECURE_SESSION_ID, sessionId);
       await SecureStorage.setItem(
         STORAGE_KEYS.SECURE_CREDENTIALS,
-        JSON.stringify({ email: cleanEmail, timestamp: Date.now() })
+        JSON.stringify({ email: cleanEmail, timestamp: Date.now() }),
       );
-
-      // Save user profile in LocalStorage
       await LocalStorage.setObject(STORAGE_KEYS.LOCAL_USER, newUser);
       await LocalStorage.setItem(STORAGE_KEYS.LOCAL_REMEMBER_EMAIL, cleanEmail);
 
@@ -236,48 +245,34 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setRememberedEmail(cleanEmail);
       triggerHaptic('success');
       return { success: true };
-    } catch (err: any) {
-      console.error('[AuthProvider] Register error:', err);
+    } catch (error) {
+      console.error('[AuthProvider] Register error:', error);
       triggerHaptic('error');
-      return { success: false, error: err?.message || 'Gagal mendaftar akun baru' };
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Gagal mendaftar akun baru',
+      };
     }
   };
 
-  /**
-   * 1-Tap Quick Login for Demo Testing
-   */
-  const quickLogin = async (email: string) => {
-    return login({ email, password: 'password123', rememberMe: true });
-  };
+  const quickLogin = async (email: string) =>
+    login({ email, password: 'password123', rememberMe: true });
 
-  /**
-   * Logout Handler
-   * Securely purges hardware encrypted tokens while maintaining general preferences
-   */
   const logout = async () => {
     try {
-      // 1. Wipe Secure Store keys
       await SecureStorage.deleteItem(STORAGE_KEYS.SECURE_TOKEN);
       await SecureStorage.deleteItem(STORAGE_KEYS.SECURE_CREDENTIALS);
       await SecureStorage.deleteItem(STORAGE_KEYS.SECURE_SESSION_ID);
-
-      // 2. Wipe Active User Profile from Local Storage
       await LocalStorage.deleteItem(STORAGE_KEYS.LOCAL_USER);
-
       setUser(null);
       setToken(null);
       triggerHaptic('success');
-    } catch (err) {
-      console.error('[AuthProvider] Logout error:', err);
+    } catch (error) {
+      console.error('[AuthProvider] Logout error:', error);
     }
   };
 
-  /**
-   * Retrieve live security and storage audit info
-   */
-  const refreshSecurityAudit = async (): Promise<StorageAuditItem[]> => {
-    return await getStorageAudit();
-  };
+  const refreshSecurityAudit = async (): Promise<StorageAuditItem[]> => getStorageAudit();
 
   return (
     <AuthContext.Provider

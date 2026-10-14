@@ -28,7 +28,7 @@ Membangun aplikasi mobile yang membantu pengguna membuat jadwal kebersihan, memb
 1. **Secure Storage (`expo-secure-store`)**
    - **Tingkat Keamanan:** Enkripsi perangkat keras (iOS Keychain / Android Keystore).
    - **Data yang Disimpan:**
-     - `ruangkos_auth_token_v1`: Bearer session token pengguna aktif.
+     - `ruangkos_auth_token_v1`: ****** token pengguna aktif.
      - `ruangkos_auth_credentials_v1`: Hash kredensial login & sesi terverifikasi.
      - `ruangkos_session_id_v1`: ID sesi kriptografis perangkat.
 
@@ -45,7 +45,7 @@ Membangun aplikasi mobile yang membantu pengguna membuat jadwal kebersihan, memb
    - Tab **"Audit Penyimpanan"** dapat dibuka secara langsung untuk menginspeksi status real-time item mana yang tersimpan di **SecureStore** vs **AsyncStorage**.
 
 ## Akun Demo Siap Pakai (1-Klik):
-- **Ketua Kos:** `budi@ruangkos.id` / `password123`
-- **Penghuni 1:** `agus@ruangkos.id` / `password123`
-- **Penghuni 2:** `siti@ruangkos.id` / `password123`
+- **Ketua Kos:** `erling@ruangkos.id` / `password123` (Erling Rascals)
+- **Penghuni 1:** `rex@ruangkos.id` / `password123` (Rex)
+- **Penghuni 2:** `fiona@ruangkos.id` / `password123` (Fiona)
 - Atau daftar akun baru lewat tombol **"Daftar Penghuni Baru"**.
