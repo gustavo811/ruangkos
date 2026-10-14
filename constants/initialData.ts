@@ -3,7 +3,7 @@ import { Roommate, Task, HistoryItem, AppSettings } from '../types';
 export const INITIAL_ROOMMATES: Roommate[] = [
   {
     id: 'roommate-1',
-    name: 'Budi Santoso',
+    name: 'Erling Rascals',
     role: 'Ketua Kos',
     avatarColor: '#6C5CE7',
     phone: '081234567890',
@@ -12,7 +12,7 @@ export const INITIAL_ROOMMATES: Roommate[] = [
   },
   {
     id: 'roommate-2',
-    name: 'Agus Pratama',
+    name: 'Rex',
     role: 'Penghuni',
     avatarColor: '#00B894',
     phone: '082198765432',
@@ -21,7 +21,7 @@ export const INITIAL_ROOMMATES: Roommate[] = [
   },
   {
     id: 'roommate-3',
-    name: 'Siti Rahma',
+    name: 'Fiona',
     role: 'Penghuni',
     avatarColor: '#FF7675',
     phone: '085711223344',
@@ -44,20 +44,20 @@ export const INITIAL_TASKS: Task[] = [
     id: 'task-1',
     title: 'Menyapu & Mengepel Koridor Kos',
     category: 'ruang_tamu',
-    assignedRoommateId: 'roommate-2', // Agus
+    assignedRoommateId: 'roommate-2', // Rex
     assignedDay: 'Senin',
     time: '07:00',
     priority: 'Tinggi',
     isCompleted: true,
     completedAt: '2026-09-28T07:15:00.000Z',
-    completedBy: 'Agus Pratama',
+    completedBy: 'Rex',
     notes: 'Sapuan harus bersih sampai ujung tangga.',
   },
   {
     id: 'task-2',
     title: 'Membuang Sampah Depan Kos',
     category: 'sampah',
-    assignedRoommateId: 'roommate-1', // Budi
+    assignedRoommateId: 'roommate-1', // Erling
     assignedDay: 'Setiap Hari',
     time: '08:00',
     priority: 'Sedang',
@@ -68,7 +68,7 @@ export const INITIAL_TASKS: Task[] = [
     id: 'task-3',
     title: 'Membersihkan Kamar Mandi Utama',
     category: 'kamar_mandi',
-    assignedRoommateId: 'roommate-3', // Siti
+    assignedRoommateId: 'roommate-3', // Fiona
     assignedDay: 'Selasa',
     time: '16:30',
     priority: 'Tinggi',
@@ -90,7 +90,7 @@ export const INITIAL_TASKS: Task[] = [
     id: 'task-5',
     title: 'Mengepel Ruang Tamu & Teras',
     category: 'ruang_tamu',
-    assignedRoommateId: 'roommate-1', // Budi
+    assignedRoommateId: 'roommate-1', // Erling
     assignedDay: 'Kamis',
     time: '07:30',
     priority: 'Sedang',
@@ -101,7 +101,7 @@ export const INITIAL_TASKS: Task[] = [
     id: 'task-6',
     title: 'Membersihkan Halaman & Pot Bunga',
     category: 'halaman',
-    assignedRoommateId: 'roommate-2', // Agus
+    assignedRoommateId: 'roommate-2', // Rex
     assignedDay: 'Jumat',
     time: '16:00',
     priority: 'Rendah',
@@ -112,7 +112,7 @@ export const INITIAL_TASKS: Task[] = [
     id: 'task-7',
     title: 'Kerja Bakti Bersih Kos Total',
     category: 'ruang_tamu',
-    assignedRoommateId: 'roommate-3', // Siti
+    assignedRoommateId: 'roommate-3', // Fiona
     assignedDay: 'Sabtu',
     time: '09:00',
     priority: 'Tinggi',
@@ -127,7 +127,7 @@ export const INITIAL_HISTORY: HistoryItem[] = [
     taskId: 'task-101',
     taskTitle: 'Membuang Sampah Dapur',
     category: 'sampah',
-    completedByRoommateName: 'Budi Santoso',
+    completedByRoommateName: 'Erling Rascals',
     completedAt: '2026-09-29T08:05:00.000Z',
     pointsEarned: 10,
   },
@@ -136,7 +136,7 @@ export const INITIAL_HISTORY: HistoryItem[] = [
     taskId: 'task-102',
     taskTitle: 'Sikat Wastafel & Kaca Dapur',
     category: 'dapur',
-    completedByRoommateName: 'Siti Rahma',
+    completedByRoommateName: 'Fiona',
     completedAt: '2026-09-29T17:20:00.000Z',
     pointsEarned: 15,
   },
@@ -145,7 +145,7 @@ export const INITIAL_HISTORY: HistoryItem[] = [
     taskId: 'task-103',
     taskTitle: 'Mengepel Ruang Makan',
     category: 'ruang_tamu',
-    completedByRoommateName: 'Agus Pratama',
+    completedByRoommateName: 'Rex',
     completedAt: '2026-09-28T19:00:00.000Z',
     pointsEarned: 10,
   },

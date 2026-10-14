@@ -2,12 +2,16 @@ import React, { useState } from 'react';
 import { StyleSheet, Text, View, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useApp } from '../context/AppContext';
-import { COLORS, RADIUS, SPACING } from '../constants/theme';
+import { useAuth } from '../context/AuthContext';
+import { COLORS, RADIUS, SHADOWS, SPACING } from '../constants/theme';
 import { ProjectInfoModal } from './ProjectInfoModal';
+import { UserProfileModal } from './UserProfileModal';
 
 export const Header: React.FC = () => {
   const { settings, triggerNotification, tasks } = useApp();
+  const { user } = useAuth();
   const [modalVisible, setModalVisible] = useState(false);
+  const [profileModalVisible, setProfileModalVisible] = useState(false);
 
   // Quick action to test auto notification
   const handleTestNotification = () => {
@@ -39,7 +43,7 @@ export const Header: React.FC = () => {
               <Text style={styles.kelompokText}>K-21</Text>
             </View>
           </View>
-          <Text style={styles.subtitle}>{settings.kosName || 'RuangKos Melati 21'}</Text>
+          <Text style={styles.subtitle}>{user?.kosName || settings.kosName || 'RuangKos Melati 21'}</Text>
         </View>
       </View>
 
@@ -48,21 +52,40 @@ export const Header: React.FC = () => {
           onPress={handleTestNotification} 
           style={({ pressed }) => [styles.iconBtn, pressed && styles.pressed]}
         >
-          <Ionicons name="notifications-outline" size={22} color={COLORS.text} />
+          <Ionicons name="notifications-outline" size={20} color={COLORS.text} />
           <View style={styles.notificationDot} />
         </Pressable>
 
         <Pressable 
           onPress={() => setModalVisible(true)} 
-          style={({ pressed }) => [styles.infoBtn, pressed && styles.pressed]}
+          style={({ pressed }) => [styles.iconBtn, pressed && styles.pressed]}
         >
-          <Ionicons name="information-circle-outline" size={22} color={COLORS.primary} />
+          <Ionicons name="information-circle-outline" size={20} color={COLORS.primary} />
         </Pressable>
+
+        {user ? (
+          <Pressable
+            onPress={() => setProfileModalVisible(true)}
+            style={({ pressed }) => [
+              styles.userAvatarBtn,
+              { backgroundColor: user.avatarColor || COLORS.primary },
+              pressed && styles.pressed,
+            ]}
+          >
+            <Text style={styles.userAvatarText}>{user.name[0]}</Text>
+            <View style={styles.onlineBadge} />
+          </Pressable>
+        ) : null}
       </View>
 
       <ProjectInfoModal 
         visible={modalVisible} 
         onClose={() => setModalVisible(false)} 
+      />
+
+      <UserProfileModal
+        visible={profileModalVisible}
+        onClose={() => setProfileModalVisible(false)}
       />
     </View>
   );
@@ -150,6 +173,32 @@ const styles = StyleSheet.create({
     backgroundColor: '#EEF2FF',
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  userAvatarBtn: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginLeft: 4,
+    position: 'relative',
+    ...SHADOWS.small,
+  },
+  userAvatarText: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: '800',
+  },
+  onlineBadge: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: COLORS.secondary,
+    borderWidth: 2,
+    borderColor: '#FFFFFF',
   },
   pressed: {
     opacity: 0.7,
