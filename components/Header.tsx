@@ -1,15 +1,19 @@
 import React, { useState } from 'react';
 import { StyleSheet, Text, View, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 import { useApp } from '../context/AppContext';
 import { useAuth } from '../context/AuthContext';
+import { useSensor } from '../context/SensorContext';
 import { COLORS, RADIUS, SHADOWS, SPACING } from '../constants/theme';
 import { ProjectInfoModal } from './ProjectInfoModal';
 import { UserProfileModal } from './UserProfileModal';
 
 export const Header: React.FC = () => {
+  const router = useRouter();
   const { settings, triggerNotification, tasks } = useApp();
   const { user } = useAuth();
+  const { isShaking, vibrationActive, shakeCount } = useSensor();
   const [modalVisible, setModalVisible] = useState(false);
   const [profileModalVisible, setProfileModalVisible] = useState(false);
 
@@ -48,6 +52,28 @@ export const Header: React.FC = () => {
       </View>
 
       <View style={styles.rightRow}>
+        {/* Sensor API Quick Shortcut & Live Shake Status */}
+        <Pressable
+          onPress={() => router.push('/(tabs)/sensor' as any)}
+          style={({ pressed }) => [
+            styles.iconBtn,
+            (isShaking || vibrationActive) && styles.sensorBtnShaking,
+            pressed && styles.pressed,
+          ]}
+        >
+          <Ionicons
+            name={isShaking ? 'flash' : 'hardware-chip-outline'}
+            size={19}
+            color={isShaking ? '#DC2626' : COLORS.primary}
+          />
+          {shakeCount > 0 && !isShaking && (
+            <View style={styles.sensorBadgeDot}>
+              <Text style={styles.sensorBadgeDotText}>{shakeCount > 9 ? '9+' : shakeCount}</Text>
+            </View>
+          )}
+          {isShaking && <View style={styles.sensorShakeDot} />}
+        </Pressable>
+
         <Pressable 
           onPress={handleTestNotification} 
           style={({ pressed }) => [styles.iconBtn, pressed && styles.pressed]}
@@ -203,5 +229,36 @@ const styles = StyleSheet.create({
   pressed: {
     opacity: 0.7,
     transform: [{ scale: 0.96 }],
+  },
+  sensorBtnShaking: {
+    backgroundColor: '#FEE2E2',
+    borderWidth: 1.5,
+    borderColor: '#EF4444',
+  },
+  sensorBadgeDot: {
+    position: 'absolute',
+    top: 4,
+    right: 4,
+    backgroundColor: COLORS.primary,
+    borderRadius: 7,
+    minWidth: 14,
+    height: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 2,
+  },
+  sensorBadgeDotText: {
+    fontSize: 8,
+    fontWeight: '800',
+    color: '#FFFFFF',
+  },
+  sensorShakeDot: {
+    position: 'absolute',
+    top: 6,
+    right: 6,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#DC2626',
   },
 });

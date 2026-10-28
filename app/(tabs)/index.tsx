@@ -5,6 +5,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { Header } from '../../components/Header';
 import { CleanlinessProgressCard } from '../../components/CleanlinessProgressCard';
+import { SensorMonitorCard } from '../../components/SensorMonitorCard';
 import { TaskCard } from '../../components/TaskCard';
 import { AddTaskModal } from '../../components/AddTaskModal';
 import { useApp } from '../../context/AppContext';
@@ -64,6 +65,7 @@ export default function HomeScreen() {
         {/* Progress & Overview Card */}
         <CleanlinessProgressCard onAddTask={() => setModalVisible(true)} />
 
+<<<<<<< HEAD
         {/* JWT Authorization Status Indicator */}
         {jwtEndpointOk && (
           <View style={styles.jwtBadgeContainer}>
@@ -74,6 +76,10 @@ export default function HomeScreen() {
             </Text>
           </View>
         )}
+=======
+        {/* Real-time Accelerometer & Motion Detection Card */}
+        <SensorMonitorCard />
+>>>>>>> 4c952aa (sensor interaction)
 
         {/* Quick Action Bar */}
         <View style={styles.quickBar}>

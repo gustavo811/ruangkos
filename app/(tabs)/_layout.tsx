@@ -57,6 +57,19 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
+        name="sensor"
+        options={{
+          title: 'Sensor',
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons
+              name={focused ? 'hardware-chip' : 'hardware-chip-outline'}
+              size={22}
+              color={color}
+            />
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="schedule"
         options={{
           title: 'Jadwal',
