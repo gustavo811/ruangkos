@@ -1,11 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import { StyleSheet, Text, View, Pressable, Animated } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 import { useApp } from '../context/AppContext';
+import { useNotifications } from '../context/NotificationContext';
 import { COLORS, RADIUS, SHADOWS, SPACING } from '../constants/theme';
 
 export const NotificationBanner: React.FC = () => {
+  const router = useRouter();
   const { activeNotification, dismissNotification } = useApp();
+  const { openNotificationById } = useNotifications();
   const [slideAnim] = useState(() => new Animated.Value(-100));
 
   const hideBanner = React.useCallback(() => {
@@ -39,6 +43,20 @@ export const NotificationBanner: React.FC = () => {
 
   if (!activeNotification || !activeNotification.visible) return null;
 
+  const handlePressBanner = () => {
+    const notifId = activeNotification.id;
+    const targetRoute = activeNotification.targetRoute;
+    hideBanner();
+
+    if (notifId) {
+      openNotificationById(notifId);
+    } else if (targetRoute) {
+      router.push(targetRoute as any);
+    } else {
+      router.push('/notifications' as any);
+    }
+  };
+
   return (
     <Animated.View
       style={[
@@ -46,7 +64,13 @@ export const NotificationBanner: React.FC = () => {
         { transform: [{ translateY: slideAnim }] },
       ]}
     >
-      <View style={styles.contentContainer}>
+      <Pressable
+        onPress={handlePressBanner}
+        style={({ pressed }) => [
+          styles.contentContainer,
+          pressed && { opacity: 0.92, transform: [{ scale: 0.99 }] },
+        ]}
+      >
         <View style={styles.iconCircle}>
           <Ionicons name="notifications" size={22} color="#FFFFFF" />
         </View>
@@ -56,12 +80,19 @@ export const NotificationBanner: React.FC = () => {
           <Text style={styles.message} numberOfLines={2}>
             {activeNotification.message}
           </Text>
+          <Text style={styles.tapHint}>Ketuk notifikasi untuk membuka halaman tujuan →</Text>
         </View>
 
-        <Pressable onPress={hideBanner} style={styles.closeButton}>
+        <Pressable
+          onPress={(e) => {
+            e.stopPropagation();
+            hideBanner();
+          }}
+          style={styles.closeButton}
+        >
           <Ionicons name="close" size={20} color={COLORS.textSecondary} />
         </Pressable>
-      </View>
+      </Pressable>
     </Animated.View>
   );
 };
@@ -106,6 +137,12 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: COLORS.textSecondary,
     lineHeight: 18,
+  },
+  tapHint: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: COLORS.primary,
+    marginTop: 4,
   },
   closeButton: {
     padding: 6,

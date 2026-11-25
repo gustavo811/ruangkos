@@ -5,33 +5,22 @@ import { useRouter } from 'expo-router';
 import { useApp } from '../context/AppContext';
 import { useAuth } from '../context/AuthContext';
 import { useSensor } from '../context/SensorContext';
+import { useNotifications } from '../context/NotificationContext';
 import { COLORS, RADIUS, SHADOWS, SPACING } from '../constants/theme';
 import { ProjectInfoModal } from './ProjectInfoModal';
 import { UserProfileModal } from './UserProfileModal';
 
 export const Header: React.FC = () => {
   const router = useRouter();
-  const { settings, triggerNotification, tasks } = useApp();
+  const { settings } = useApp();
   const { user } = useAuth();
   const { isShaking, vibrationActive, shakeCount } = useSensor();
+  const { unreadCount, permissionStatus } = useNotifications();
   const [modalVisible, setModalVisible] = useState(false);
   const [profileModalVisible, setProfileModalVisible] = useState(false);
 
-  // Quick action to test auto notification
-  const handleTestNotification = () => {
-    const pending = tasks.filter(t => !t.isCompleted);
-    if (pending.length > 0) {
-      const first = pending[0];
-      triggerNotification(
-        '🔔 Pengingat Kebersihan Kos!',
-        `Jangan lupa tugas "${first.title}" (Jam ${first.time})`
-      );
-    } else {
-      triggerNotification(
-        '✨ Semua Kos Bersih!',
-        'Luar biasa! Tidak ada tugas kebersihan yang tertunda hari ini.'
-      );
-    }
+  const handleOpenNotifications = () => {
+    router.push('/notifications' as any);
   };
 
   return (
@@ -75,11 +64,23 @@ export const Header: React.FC = () => {
         </Pressable>
 
         <Pressable 
-          onPress={handleTestNotification} 
+          onPress={handleOpenNotifications} 
           style={({ pressed }) => [styles.iconBtn, pressed && styles.pressed]}
         >
-          <Ionicons name="notifications-outline" size={20} color={COLORS.text} />
-          <View style={styles.notificationDot} />
+          <Ionicons
+            name={unreadCount > 0 ? 'notifications' : 'notifications-outline'}
+            size={20}
+            color={unreadCount > 0 ? COLORS.primary : COLORS.text}
+          />
+          {unreadCount > 0 ? (
+            <View style={styles.notifCountBadge}>
+              <Text style={styles.notifCountText}>
+                {unreadCount > 9 ? '9+' : unreadCount}
+              </Text>
+            </View>
+          ) : permissionStatus !== 'granted' ? (
+            <View style={styles.notificationDot} />
+          ) : null}
         </Pressable>
 
         <Pressable 
@@ -191,6 +192,23 @@ const styles = StyleSheet.create({
     height: 8,
     borderRadius: 4,
     backgroundColor: COLORS.accent,
+  },
+  notifCountBadge: {
+    position: 'absolute',
+    top: 3,
+    right: 3,
+    minWidth: 16,
+    height: 16,
+    borderRadius: 8,
+    backgroundColor: COLORS.accent,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 3,
+  },
+  notifCountText: {
+    fontSize: 9,
+    fontWeight: '800',
+    color: '#FFFFFF',
   },
   infoBtn: {
     width: 38,

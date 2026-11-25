@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as SecureStore from 'expo-secure-store';
 import { Platform } from 'react-native';
-import { AuthUser, StorageAuditItem } from '../types';
+import { AuthUser, RegisteredDevice, StorageAuditItem } from '../types';
 
 /**
  * Storage Architecture for RuangKos:
@@ -26,6 +26,9 @@ export const STORAGE_KEYS = {
   LOCAL_REMEMBER_EMAIL: '@ruangkos_remember_email_v1',
   LOCAL_REGISTERED_USERS: '@ruangkos_registered_accounts_v1',
   LOCAL_AUTH_LOGS: '@ruangkos_auth_logs_v1',
+  LOCAL_PUSH_TOKEN: '@ruangkos_expo_push_token_v1',
+  LOCAL_PUSH_DEVICE: '@ruangkos_push_device_v1',
+  LOCAL_PUSH_HISTORY: '@ruangkos_push_history_v1',
 };
 
 // Check if SecureStore is natively supported on current platform
@@ -212,6 +215,18 @@ export async function getStorageAudit(): Promise<StorageAuditItem[]> {
     description: 'Daftar Akun Terdaftar di Aplikasi (Offline Persistence)',
     exists: !!regUsers && regUsers.length > 0,
     preview: regUsers ? `${regUsers.length} akun terdaftar` : '0 akun',
+  });
+
+  const pushDevice = await LocalStorage.getObject<RegisteredDevice>(STORAGE_KEYS.LOCAL_PUSH_DEVICE);
+  audit.push({
+    key: STORAGE_KEYS.LOCAL_PUSH_DEVICE,
+    storageType: 'AsyncStorage',
+    isEncrypted: false,
+    description: 'Registrasi Perangkat & Expo Push Token',
+    exists: !!pushDevice,
+    preview: pushDevice
+      ? `${pushDevice.deviceName} (${pushDevice.pushToken.substring(0, 24)}...)`
+      : 'Perangkat belum terdaftar',
   });
 
   return audit;

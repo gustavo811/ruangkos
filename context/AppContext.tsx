@@ -1,7 +1,14 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Haptics from 'expo-haptics';
-import { Task, Roommate, HistoryItem, AppSettings, DayOfWeek } from '../types';
+import {
+  Task,
+  Roommate,
+  HistoryItem,
+  AppSettings,
+  ActiveInAppNotification,
+  NotificationCategory,
+} from '../types';
 import { 
   INITIAL_ROOMMATES, 
   INITIAL_TASKS, 
@@ -14,7 +21,7 @@ interface AppContextType {
   roommates: Roommate[];
   history: HistoryItem[];
   settings: AppSettings;
-  activeNotification: { title: string; message: string; visible: boolean } | null;
+  activeNotification: ActiveInAppNotification | null;
   
   // Task Actions
   addTask: (task: Omit<Task, 'id' | 'isCompleted'>) => Promise<void>;
@@ -30,7 +37,15 @@ interface AppContextType {
   rotateWeeklySchedule: () => Promise<void>;
 
   // Notification Simulation Actions
-  triggerNotification: (title: string, message: string) => void;
+  triggerNotification: (
+    title: string,
+    message: string,
+    options?: {
+      id?: string;
+      targetRoute?: string;
+      category?: NotificationCategory;
+    }
+  ) => void;
   dismissNotification: () => void;
 
   // Settings Actions
@@ -55,7 +70,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [roommates, setRoommates] = useState<Roommate[]>([]);
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [settings, setSettings] = useState<AppSettings>(INITIAL_SETTINGS);
-  const [activeNotification, setActiveNotification] = useState<{ title: string; message: string; visible: boolean } | null>(null);
+  const [activeNotification, setActiveNotification] = useState<ActiveInAppNotification | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
 
   // Load state on mount
@@ -245,8 +260,23 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   // Notification Simulation
-  const triggerNotification = (title: string, message: string) => {
-    setActiveNotification({ title, message, visible: true });
+  const triggerNotification = (
+    title: string,
+    message: string,
+    options?: {
+      id?: string;
+      targetRoute?: string;
+      category?: NotificationCategory;
+    }
+  ) => {
+    setActiveNotification({
+      id: options?.id,
+      title,
+      message,
+      visible: true,
+      targetRoute: options?.targetRoute,
+      category: options?.category,
+    });
   };
 
   const dismissNotification = () => {

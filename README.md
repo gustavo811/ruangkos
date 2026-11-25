@@ -24,9 +24,17 @@ Membangun aplikasi mobile yang membantu pengguna membuat jadwal kebersihan, memb
 | **Pembagian Tugas** | Menentukan siapa yang bertugas setiap hari & acak rotasi mingguan. |
 | **Riwayat Kebersihan** | Melihat daftar tugas yang sudah selesai dan papan peringkat rajin piket. |
 
-<<<<<<< HEAD
-## Arsitektur Autentikasi JWT (JSON Web Token) & Penyimpanan Data
-=======
+## Push Notification Integration (`expo-notifications`)
+
+Aplikasi dilengkapi integrasi Push Notification 7 langkah end-to-end:
+1. **Jalankan Aplikasi** — Konfigurasi `Notifications.setNotificationHandler` & Android Notification Channel saat startup.
+2. **Minta Permission** — Meminta izin notifikasi OS (`Notifications.requestPermissionsAsync`) dengan antarmuka Tolak / Izinkan.
+3. **Registrasi Perangkat** — Mendaftarkan metadata perangkat (`expo-device`) ke endpoint `POST /api/v1/notifications/register-device`.
+4. **Dapatkan Push Token** — Mengambil `ExponentPushToken[...]` melalui `Notifications.getExpoPushTokenAsync`.
+5. **Kirim Notifikasi** — Mengirim notifikasi melalui server/provider (`POST /api/v1/notifications/send` -> Expo Push API `https://exp.host/--/api/v2/push/send` / local trigger).
+6. **Terima Notifikasi** — Listener foreground (`addNotificationReceivedListener`), inbox notifikasi, dan banner in-app interaktif.
+7. **Tekan & Buka Halaman** — Listener respons (`addNotificationResponseReceivedListener` & `useLastNotificationResponse`) menavigasi langsung ke halaman tujuan **Detail Pengumuman** (`/announcement/[id]`).
+
 ## Sensor API & Akselerometer 3-Axis (`expo-sensors`)
 
 Aplikasi dilengkapi dengan modul sensor akselerometer real-time yang membaca perubahan posisi dan gerakan perangkat:
@@ -48,8 +56,7 @@ Aplikasi dilengkapi dengan modul sensor akselerometer real-time yang membaca per
    - Tersedia tombol uji cepat ("Simulasi Goyangan Kuat", "Miring Kiri", "Miring Kanan") agar fitur dapat diuji baik pada perangkat fisik (Expo Go) maupun pada browser/web preview.
 
 
-## Arsitektur Penyimpanan Data (Storage Architecture)
->>>>>>> 4c952aa (sensor interaction)
+## Arsitektur Autentikasi JWT (JSON Web Token) & Penyimpanan Data
 
 ### 1. Implementasi JWT Token (RFC 7519 Standard)
 - **Struktur Token:** `Header.Payload.Signature`

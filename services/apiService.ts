@@ -4,10 +4,12 @@ import {
   AuthUser, 
   LoginCredentials, 
   RegisterCredentials, 
+  RegisteredDevice,
   Task 
 } from '../types';
 import { generateUserJwt, verifyJwt, createBearerAuthHeader, decodeJwt } from './jwtService';
 import { LocalStorage, SecureStorage, STORAGE_KEYS } from './storageService';
+import { sendViaExpoPushApi } from './notificationService';
 
 /**
  * RuangKos Centralized API Service
@@ -366,6 +368,174 @@ export const ApiService = {
       data: {
         message: 'Logout berhasil. Sesi token telah ditutup di server.',
         revokedAt: new Date().toISOString(),
+      },
+    };
+  },
+
+  /**
+   * 4. ENDPOINT: POST /api/v1/notifications/register-device
+   * Step 3: Mendaftarkan perangkat & ExponentPushToken ke server RuangKos.
+   */
+  async registerPushDevice(
+    token: string | null,
+    devicePayload: Omit<RegisteredDevice, 'registeredAt'>
+  ): Promise<ApiResponse<RegisteredDevice>> {
+    const endpoint = `${API_BASE_URL}/notifications/register-device`;
+    const authHeader = token ? createBearerAuthHeader(token) : undefined;
+    const validation = validateAuthHeader(authHeader);
+
+    if (!validation.valid || !validation.user) {
+      recordLog(
+        'POST',
+        endpoint,
+        authHeader,
+        401,
+        'Unauthorized',
+        `Registrasi perangkat ditolak: ${validation.error || 'Token tidak valid'}`
+      );
+      return {
+        success: false,
+        statusCode: 401,
+        error: validation.error || 'Otorisasi JWT diperlukan untuk registrasi perangkat.',
+      };
+    }
+
+    const registeredDevice: RegisteredDevice = {
+      ...devicePayload,
+      userId: validation.user.id,
+      kosName: validation.user.kosName,
+      registeredAt: new Date().toISOString(),
+    };
+
+    await LocalStorage.setObject(STORAGE_KEYS.LOCAL_PUSH_DEVICE, registeredDevice);
+    await LocalStorage.setItem(STORAGE_KEYS.LOCAL_PUSH_TOKEN, registeredDevice.pushToken);
+
+    recordLog(
+      'POST',
+      endpoint,
+      authHeader,
+      201,
+      'Created',
+      `Perangkat "${registeredDevice.deviceName}" (${registeredDevice.platform}) terdaftar dengan token ${registeredDevice.pushToken.substring(0, 26)}...`
+    );
+
+    return {
+      success: true,
+      statusCode: 201,
+      data: registeredDevice,
+    };
+  },
+
+  /**
+   * 5. ENDPOINT: POST /api/v1/notifications/send
+   * Step 5: Mengirim notifikasi melalui server/provider (Expo Push API / Local Dispatch).
+   */
+  async sendPushNotification(
+    token: string | null,
+    payload: {
+      to: string;
+      tokenType: 'expo' | 'preview';
+      title: string;
+      subtitle?: string;
+      body: string;
+      data: Record<string, unknown>;
+    }
+  ): Promise<
+    ApiResponse<{
+      ticketId: string;
+      ticketStatus: 'ok' | 'error' | 'simulated';
+      deliveryChannel: 'expo_push_api' | 'local_notification' | 'in_app_preview';
+      providerNote: string;
+    }>
+  > {
+    const endpoint = `${API_BASE_URL}/notifications/send`;
+    const authHeader = token ? createBearerAuthHeader(token) : undefined;
+    const validation = validateAuthHeader(authHeader);
+
+    if (!validation.valid) {
+      recordLog(
+        'POST',
+        endpoint,
+        authHeader,
+        401,
+        'Unauthorized',
+        `Pengiriman push notification ditolak: ${validation.error}`
+      );
+      return {
+        success: false,
+        statusCode: 401,
+        error: validation.error,
+      };
+    }
+
+    if (payload.tokenType === 'expo' && payload.to.startsWith('ExponentPushToken[')) {
+      const expoRes = await sendViaExpoPushApi({
+        to: payload.to,
+        title: payload.title,
+        subtitle: payload.subtitle,
+        body: payload.body,
+        data: payload.data,
+      });
+
+      if (expoRes.ok && expoRes.ticketId) {
+        recordLog(
+          'POST',
+          `${endpoint} -> exp.host/--/api/v2/push/send`,
+          authHeader,
+          200,
+          'OK',
+          `Push notification dikirim via Expo Push Service (Ticket: ${expoRes.ticketId}).`
+        );
+        return {
+          success: true,
+          statusCode: 200,
+          data: {
+            ticketId: expoRes.ticketId,
+            ticketStatus: 'ok',
+            deliveryChannel: 'expo_push_api',
+            providerNote: `Terkirim melalui Expo Push Service (Ticket ID: ${expoRes.ticketId})`,
+          },
+        };
+      }
+
+      recordLog(
+        'POST',
+        endpoint,
+        authHeader,
+        202,
+        'Accepted (Local Fallback)',
+        `Expo Push API fallback (${expoRes.error || 'offline'}). Dialihkan ke local notification trigger.`
+      );
+      return {
+        success: true,
+        statusCode: 202,
+        data: {
+          ticketId: `local-${Date.now()}`,
+          ticketStatus: 'simulated',
+          deliveryChannel: 'local_notification',
+          providerNote: `Expo API fallback (${expoRes.error || 'offline'}), dipicu langsung ke perangkat.`,
+        },
+      };
+    }
+
+    const simulatedTicketId = `ticket-rk-${Date.now().toString(36)}`;
+    recordLog(
+      'POST',
+      endpoint,
+      authHeader,
+      200,
+      'OK',
+      `Notifikasi "${payload.title}" diproses server & dikirim ke perangkat (${payload.to.substring(0, 24)}...).`
+    );
+
+    return {
+      success: true,
+      statusCode: 200,
+      data: {
+        ticketId: simulatedTicketId,
+        ticketStatus: 'simulated',
+        deliveryChannel: 'local_notification',
+        providerNote: 'Dikirim melalui Notification Dispatcher RuangKos ke perangkat target.',
       },
     };
   },

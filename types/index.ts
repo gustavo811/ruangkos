@@ -128,3 +128,50 @@ export interface ApiResponse<T = any> {
   token?: string;
   statusCode: number;
 }
+
+export type NotificationPermissionState = 'undetermined' | 'granted' | 'denied';
+
+export type NotificationCategory =
+  | 'pengumuman'
+  | 'jadwal_piket'
+  | 'rotasi'
+  | 'kebersihan';
+
+export interface RegisteredDevice {
+  deviceId: string;
+  deviceName: string;
+  platform: string;
+  osVersion: string;
+  isPhysicalDevice: boolean;
+  pushToken: string;
+  tokenType: 'expo' | 'preview';
+  registeredAt: string;
+  userId: string;
+  kosName: string;
+}
+
+export interface PushNotificationRecord {
+  id: string;
+  title: string;
+  subtitle?: string;
+  body: string;
+  category: NotificationCategory;
+  sender: string;
+  targetRoute: string;
+  data: Record<string, unknown>;
+  deliveryChannel: 'expo_push_api' | 'local_notification' | 'in_app_preview';
+  ticketId?: string;
+  ticketStatus?: 'ok' | 'error' | 'simulated';
+  receivedAt: string;
+  isRead: boolean;
+  tappedAt?: string;
+}
+
+export interface ActiveInAppNotification {
+  id?: string;
+  title: string;
+  message: string;
+  visible: boolean;
+  targetRoute?: string;
+  category?: NotificationCategory;
+}

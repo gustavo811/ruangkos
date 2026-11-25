@@ -3,6 +3,7 @@ import {
   StyleSheet, Text, View, ScrollView, Pressable 
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 import { Header } from '../../components/Header';
 import { CleanlinessProgressCard } from '../../components/CleanlinessProgressCard';
 import { SensorMonitorCard } from '../../components/SensorMonitorCard';
@@ -10,13 +11,21 @@ import { TaskCard } from '../../components/TaskCard';
 import { AddTaskModal } from '../../components/AddTaskModal';
 import { useApp } from '../../context/AppContext';
 import { useAuth } from '../../context/AuthContext';
+import { useNotifications } from '../../context/NotificationContext';
 import { ApiService } from '../../services/apiService';
 import { COLORS, RADIUS, SHADOWS, SPACING } from '../../constants/theme';
 import { DayOfWeek } from '../../types';
 
 export default function HomeScreen() {
-  const { tasks, roommates, rotateWeeklySchedule, triggerNotification } = useApp();
+  const router = useRouter();
+  const { tasks, roommates, rotateWeeklySchedule } = useApp();
   const { token } = useAuth();
+  const {
+    permissionStatus,
+    registeredDevice,
+    expoPushToken,
+    unreadCount,
+  } = useNotifications();
   const [modalVisible, setModalVisible] = useState(false);
   const [jwtEndpointOk, setJwtEndpointOk] = useState<boolean | null>(null);
 
@@ -65,7 +74,6 @@ export default function HomeScreen() {
         {/* Progress & Overview Card */}
         <CleanlinessProgressCard onAddTask={() => setModalVisible(true)} />
 
-<<<<<<< HEAD
         {/* JWT Authorization Status Indicator */}
         {jwtEndpointOk && (
           <View style={styles.jwtBadgeContainer}>
@@ -76,10 +84,37 @@ export default function HomeScreen() {
             </Text>
           </View>
         )}
-=======
+
+        {/* Push Notification Integration Status Card */}
+        <Pressable
+          onPress={() => router.push('/notifications' as any)}
+          style={({ pressed }) => [styles.pushCard, pressed && styles.pressed]}
+        >
+          <View style={styles.pushCardIcon}>
+            <Ionicons name="notifications" size={20} color="#FFFFFF" />
+          </View>
+          <View style={{ flex: 1 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <Text style={styles.pushCardTitle}>Push Notification Integration</Text>
+              {unreadCount > 0 && (
+                <View style={styles.pushUnreadPill}>
+                  <Text style={styles.pushUnreadPillText}>{unreadCount} Baru</Text>
+                </View>
+              )}
+            </View>
+            <Text style={styles.pushCardSub} numberOfLines={1}>
+              {registeredDevice
+                ? `Perangkat Terdaftar • ${expoPushToken?.substring(0, 24)}...`
+                : permissionStatus === 'granted'
+                ? 'Izin Aktif • Ketuk untuk registrasi & demo 7 langkah'
+                : 'Ketuk untuk aktifkan izin, token & uji notifikasi'}
+            </Text>
+          </View>
+          <Ionicons name="chevron-forward" size={18} color={COLORS.primary} />
+        </Pressable>
+
         {/* Real-time Accelerometer & Motion Detection Card */}
         <SensorMonitorCard />
->>>>>>> 4c952aa (sensor interaction)
 
         {/* Quick Action Bar */}
         <View style={styles.quickBar}>
@@ -106,14 +141,14 @@ export default function HomeScreen() {
           </Pressable>
 
           <Pressable 
-            onPress={() => triggerNotification('🔔 Waktunya Kebersihan!', 'Pengingat otomatis piket kos telah diaktifkan.')}
+            onPress={() => router.push('/notifications' as any)}
             style={({ pressed }) => [styles.actionCard, pressed && styles.pressed]}
           >
             <View style={[styles.actionIcon, { backgroundColor: '#FEF3C7' }]}>
-              <Ionicons name="alarm" size={20} color={COLORS.warning} />
+              <Ionicons name="notifications" size={20} color={COLORS.warning} />
             </View>
-            <Text style={styles.actionTitle}>Pengingat</Text>
-            <Text style={styles.actionSub}>Tes Notifikasi</Text>
+            <Text style={styles.actionTitle}>Push Demo</Text>
+            <Text style={styles.actionSub}>Notifikasi</Text>
           </Pressable>
         </View>
 
@@ -317,6 +352,47 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '700',
     color: '#065F46',
+  },
+  pushCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORS.surface,
+    borderRadius: RADIUS.lg,
+    padding: 12,
+    marginBottom: SPACING.md,
+    borderWidth: 1.5,
+    borderColor: COLORS.primaryLight,
+    ...SHADOWS.small,
+  },
+  pushCardIcon: {
+    width: 38,
+    height: 38,
+    borderRadius: 12,
+    backgroundColor: COLORS.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  pushCardTitle: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: COLORS.text,
+  },
+  pushCardSub: {
+    fontSize: 11,
+    color: COLORS.textSecondary,
+    marginTop: 2,
+  },
+  pushUnreadPill: {
+    backgroundColor: '#FEE2E2',
+    paddingHorizontal: 6,
+    paddingVertical: 1,
+    borderRadius: RADIUS.full,
+  },
+  pushUnreadPillText: {
+    fontSize: 9,
+    fontWeight: '800',
+    color: COLORS.danger,
   },
   dutyName: {
     fontSize: 12,

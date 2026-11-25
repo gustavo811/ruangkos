@@ -3,14 +3,18 @@ import {
   StyleSheet, Text, View, ScrollView, Pressable, Switch, Alert 
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 import { Header } from '../../components/Header';
 import { useApp } from '../../context/AppContext';
+import { useNotifications } from '../../context/NotificationContext';
 import { COLORS, RADIUS, SHADOWS, SPACING } from '../../constants/theme';
 
 export default function HistoryScreen() {
+  const router = useRouter();
   const { 
     history, settings, updateSettings, resetToDefaultData, cleanlinessScore 
   } = useApp();
+  const { permissionStatus, registeredDevice } = useNotifications();
 
   const handleResetData = () => {
     Alert.alert(
@@ -154,6 +158,23 @@ export default function HistoryScreen() {
               thumbColor={settings.autoRotateWeekly ? COLORS.warning : '#FFFFFF'}
             />
           </View>
+
+          {/* Push Notification Integration Link */}
+          <Pressable
+            onPress={() => router.push('/notifications' as any)}
+            style={({ pressed }) => [styles.settingRow, styles.settingBorder, pressed && styles.pressed]}
+          >
+            <View style={styles.settingLeft}>
+              <Ionicons name="notifications-outline" size={20} color={COLORS.primary} style={{ marginRight: 10 }} />
+              <View>
+                <Text style={styles.settingTitle}>Push Notification & Expo Token</Text>
+                <Text style={styles.settingSub}>
+                  Izin: {permissionStatus} • {registeredDevice ? 'Perangkat Terdaftar' : 'Belum Terdaftar'}
+                </Text>
+              </View>
+            </View>
+            <Ionicons name="chevron-forward" size={18} color={COLORS.textMuted} />
+          </Pressable>
 
           {/* Reset Button */}
           <Pressable 
