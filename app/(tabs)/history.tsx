@@ -176,6 +176,23 @@ export default function HistoryScreen() {
             <Ionicons name="chevron-forward" size={18} color={COLORS.textMuted} />
           </Pressable>
 
+          {/* Location-Based & Geofencing Link */}
+          <Pressable
+            onPress={() => router.push('/location' as any)}
+            style={({ pressed }) => [styles.settingRow, styles.settingBorder, pressed && styles.pressed]}
+          >
+            <View style={styles.settingLeft}>
+              <Ionicons name="location-outline" size={20} color={COLORS.secondary} style={{ marginRight: 10 }} />
+              <View>
+                <Text style={styles.settingTitle}>Lokasi GPS, Peta & Geofencing</Text>
+                <Text style={styles.settingSub}>
+                  Koordinat, Reverse Geocoding & Optimasi Baterai
+                </Text>
+              </View>
+            </View>
+            <Ionicons name="chevron-forward" size={18} color={COLORS.textMuted} />
+          </Pressable>
+
           {/* Reset Button */}
           <Pressable 
             onPress={handleResetData}

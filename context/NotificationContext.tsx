@@ -127,9 +127,13 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
   const handledResponseIdsRef = useRef<Set<string>>(new Set());
   const notificationsRef = useRef<PushNotificationRecord[]>(notifications);
-  notificationsRef.current = notifications;
+
+  useEffect(() => {
+    notificationsRef.current = notifications;
+  }, [notifications]);
 
   const persistNotifications = useCallback(async (items: PushNotificationRecord[]) => {
+    notificationsRef.current = items;
     setNotifications(items);
     await LocalStorage.setObject(STORAGE_KEYS.LOCAL_PUSH_HISTORY, items);
   }, []);

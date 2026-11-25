@@ -69,6 +69,7 @@ export const ProjectInfoModal: React.FC<ProjectInfoModalProps> = ({ visible, onC
               <FeatureRow icon="calendar-outline" title="Jadwal Piket" desc="Jadwal kebersihan harian & mingguan" />
               <FeatureRow icon="checkbox-outline" title="Checklist Tugas" desc="Tandai tugas yang sudah selesai" />
               <FeatureRow icon="alarm-outline" title="Pengingat & Push Notification" desc="Izin notifikasi, registrasi perangkat, ExponentPushToken, & navigasi detail" />
+              <FeatureRow icon="location-outline" title="Lokasi GPS & Geofencing" desc="Peta interaktif, marker, reverse geocoding, notifikasi area & hemat baterai" />
               <FeatureRow icon="shuffle-outline" title="Pembagian & Rotasi" desc="Acak tugas mingguan secara adil" />
               <FeatureRow icon="stats-chart-outline" title="Riwayat & Leaderboard" desc="Pantau poin & statistik kebersihan" />
             </View>

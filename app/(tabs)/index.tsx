@@ -1,19 +1,22 @@
-import React, { useState, useEffect } from 'react';
-import { 
-  StyleSheet, Text, View, ScrollView, Pressable 
-} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { Header } from '../../components/Header';
+import { useEffect, useState } from 'react';
+import {
+  Pressable,
+  ScrollView,
+  StyleSheet, Text, View
+} from 'react-native';
+import { AddTaskModal } from '../../components/AddTaskModal';
 import { CleanlinessProgressCard } from '../../components/CleanlinessProgressCard';
+import { Header } from '../../components/Header';
 import { SensorMonitorCard } from '../../components/SensorMonitorCard';
 import { TaskCard } from '../../components/TaskCard';
-import { AddTaskModal } from '../../components/AddTaskModal';
+import { COLORS, RADIUS, SHADOWS, SPACING } from '../../constants/theme';
 import { useApp } from '../../context/AppContext';
 import { useAuth } from '../../context/AuthContext';
+import { useLocationTracking } from '../../context/LocationContext';
 import { useNotifications } from '../../context/NotificationContext';
 import { ApiService } from '../../services/apiService';
-import { COLORS, RADIUS, SHADOWS, SPACING } from '../../constants/theme';
 import { DayOfWeek } from '../../types';
 
 export default function HomeScreen() {
@@ -26,6 +29,12 @@ export default function HomeScreen() {
     expoPushToken,
     unreadCount,
   } = useNotifications();
+  const {
+    currentLocation,
+    activeZone,
+    isInsideGeofence,
+    distanceMeters,
+  } = useLocationTracking();
   const [modalVisible, setModalVisible] = useState(false);
   const [jwtEndpointOk, setJwtEndpointOk] = useState<boolean | null>(null);
 
@@ -66,7 +75,7 @@ export default function HomeScreen() {
     <View style={styles.container}>
       <Header />
 
-      <ScrollView 
+      <ScrollView
         style={styles.content}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
@@ -106,11 +115,46 @@ export default function HomeScreen() {
               {registeredDevice
                 ? `Perangkat Terdaftar • ${expoPushToken?.substring(0, 24)}...`
                 : permissionStatus === 'granted'
-                ? 'Izin Aktif • Ketuk untuk registrasi & demo 7 langkah'
-                : 'Ketuk untuk aktifkan izin, token & uji notifikasi'}
+                  ? 'Izin Aktif • Ketuk untuk registrasi & demo 7 langkah'
+                  : 'Ketuk untuk aktifkan izin, token & uji notifikasi'}
             </Text>
           </View>
           <Ionicons name="chevron-forward" size={18} color={COLORS.primary} />
+        </Pressable>
+
+        {/* Location-Based & Geofencing Status Card */}
+        <Pressable
+          onPress={() => router.push('/location' as any)}
+          style={({ pressed }) => [styles.locationCard, pressed && styles.pressed]}
+        >
+          <View style={styles.locationCardIcon}>
+            <Ionicons name="location" size={20} color="#FFFFFF" />
+          </View>
+          <View style={{ flex: 1 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <Text style={styles.pushCardTitle}>Lokasi GPS & Geofencing</Text>
+              <View
+                style={[
+                  styles.geoMiniPill,
+                  { backgroundColor: isInsideGeofence ? '#DCFCE7' : '#FEF3C7' },
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.geoMiniPillText,
+                    { color: isInsideGeofence ? '#15803D' : '#92400E' },
+                  ]}
+                >
+                  {isInsideGeofence ? 'Dalam Area' : `${distanceMeters}m`}
+                </Text>
+              </View>
+            </View>
+            <Text style={styles.pushCardSub} numberOfLines={1}>
+              {activeZone.label} • Lat {currentLocation.latitude.toFixed(4)}, Lng{' '}
+              {currentLocation.longitude.toFixed(4)}
+            </Text>
+          </View>
+          <Ionicons name="chevron-forward" size={18} color={COLORS.secondary} />
         </Pressable>
 
         {/* Real-time Accelerometer & Motion Detection Card */}
@@ -118,7 +162,7 @@ export default function HomeScreen() {
 
         {/* Quick Action Bar */}
         <View style={styles.quickBar}>
-          <Pressable 
+          <Pressable
             onPress={() => setModalVisible(true)}
             style={({ pressed }) => [styles.actionCard, pressed && styles.pressed]}
           >
@@ -129,7 +173,7 @@ export default function HomeScreen() {
             <Text style={styles.actionSub}>Tugas Piket</Text>
           </Pressable>
 
-          <Pressable 
+          <Pressable
             onPress={rotateWeeklySchedule}
             style={({ pressed }) => [styles.actionCard, pressed && styles.pressed]}
           >
@@ -140,7 +184,7 @@ export default function HomeScreen() {
             <Text style={styles.actionSub}>Rotasi Mingguan</Text>
           </Pressable>
 
-          <Pressable 
+          <Pressable
             onPress={() => router.push('/notifications' as any)}
             style={({ pressed }) => [styles.actionCard, pressed && styles.pressed]}
           >
@@ -205,16 +249,16 @@ export default function HomeScreen() {
       </ScrollView>
 
       {/* Floating Action Button */}
-      <Pressable 
+      <Pressable
         onPress={() => setModalVisible(true)}
         style={({ pressed }) => [styles.fab, pressed && styles.fabPressed]}
       >
         <Ionicons name="add" size={28} color="#FFFFFF" />
       </Pressable>
 
-      <AddTaskModal 
-        visible={modalVisible} 
-        onClose={() => setModalVisible(false)} 
+      <AddTaskModal
+        visible={modalVisible}
+        onClose={() => setModalVisible(false)}
       />
     </View>
   );
@@ -393,6 +437,35 @@ const styles = StyleSheet.create({
     fontSize: 9,
     fontWeight: '800',
     color: COLORS.danger,
+  },
+  locationCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORS.surface,
+    borderRadius: RADIUS.lg,
+    padding: 12,
+    marginBottom: SPACING.md,
+    borderWidth: 1.5,
+    borderColor: '#A7F3D0',
+    ...SHADOWS.small,
+  },
+  locationCardIcon: {
+    width: 38,
+    height: 38,
+    borderRadius: 12,
+    backgroundColor: COLORS.secondary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  geoMiniPill: {
+    paddingHorizontal: 6,
+    paddingVertical: 1,
+    borderRadius: RADIUS.full,
+  },
+  geoMiniPillText: {
+    fontSize: 9,
+    fontWeight: '800',
   },
   dutyName: {
     fontSize: 12,

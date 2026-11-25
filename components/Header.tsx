@@ -63,6 +63,13 @@ export const Header: React.FC = () => {
           {isShaking && <View style={styles.sensorShakeDot} />}
         </Pressable>
 
+        <Pressable
+          onPress={() => router.push('/location' as any)}
+          style={({ pressed }) => [styles.iconBtn, pressed && styles.pressed]}
+        >
+          <Ionicons name="location-outline" size={19} color={COLORS.secondary} />
+        </Pressable>
+
         <Pressable 
           onPress={handleOpenNotifications} 
           style={({ pressed }) => [styles.iconBtn, pressed && styles.pressed]}

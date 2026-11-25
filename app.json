@@ -50,6 +50,13 @@
           "icon": "./assets/images/android-icon-monochrome.png",
           "color": "#6C5CE7"
         }
+      ],
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Izinkan RuangKos mengakses lokasi untuk peta kos dan notifikasi geofencing area piket.",
+          "locationWhenInUsePermission": "Izinkan RuangKos mengakses GPS saat aplikasi digunakan untuk membaca koordinat dan jarak ke kos."
+        }
       ]
     ],
     "experiments": {

@@ -175,3 +175,47 @@ export interface ActiveInAppNotification {
   targetRoute?: string;
   category?: NotificationCategory;
 }
+
+export type LocationPermissionState = 'undetermined' | 'granted' | 'denied';
+
+export type PowerMode = 'battery_saver' | 'balanced' | 'high_accuracy';
+
+export interface GeoCoordinate {
+  latitude: number;
+  longitude: number;
+  accuracy?: number | null;
+  altitude?: number | null;
+  speed?: number | null;
+  timestamp: number;
+}
+
+export interface GeocodedAddress {
+  formattedAddress: string;
+  street?: string;
+  district?: string;
+  city?: string;
+  region?: string;
+  postalCode?: string;
+  country?: string;
+  source: 'expo_native' | 'nominatim_web' | 'cached_fallback';
+}
+
+export interface GeofenceZone {
+  id: string;
+  name: string;
+  label: string;
+  latitude: number;
+  longitude: number;
+  radius: number;
+  addressHint: string;
+}
+
+export interface GeofenceEvent {
+  id: string;
+  zoneId: string;
+  zoneName: string;
+  type: 'ENTER' | 'EXIT';
+  distanceMeters: number;
+  timestamp: string;
+  source: 'gps_live' | 'simulation';
+}

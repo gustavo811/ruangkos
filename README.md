@@ -24,6 +24,17 @@ Membangun aplikasi mobile yang membantu pengguna membuat jadwal kebersihan, memb
 | **Pembagian Tugas** | Menentukan siapa yang bertugas setiap hari & acak rotasi mingguan. |
 | **Riwayat Kebersihan** | Melihat daftar tugas yang sudah selesai dan papan peringkat rajin piket. |
 
+## Location-Based Features (`expo-location` & `react-native-maps`)
+
+Aplikasi dilengkapi modul pelacakan lokasi & geofencing:
+1. **Mengakses GPS** — Permintaan izin lokasi foreground (`Location.requestForegroundPermissionsAsync`) & cek layanan GPS (`hasServicesEnabledAsync`).
+2. **Membaca Koordinat** — Pembacaan latitude, longitude, akurasi, dan timestamp via `getCurrentPositionAsync` dan `watchPositionAsync`.
+3. **Menampilkan Peta** — Peta interaktif native (`react-native-maps`) dengan kontrol zoom `+`/`-` dan recenter, serta fallback interaktif pada Web.
+4. **Menampilkan Marker** — Marker lokasi pengguna, pin pusat zona kos/kampus, dan lingkaran batas geofence.
+5. **Reverse Geocoding** — Konversi koordinat menjadi alamat jalan & kota terbaca (`Location.reverseGeocodeAsync` + Nominatim fallback).
+6. **Menguji Geofencing** — Perhitungan jarak Haversine, deteksi transisi masuk/keluar area radius (100–300m), tombol simulasi masuk/keluar area, dan notifikasi otomatis.
+7. **Optimasi Baterai** — Pemilihan `Location.Accuracy` (`Low`, `Balanced`, `High`), throttling `distanceInterval` & `timeInterval`, caching reverse geocode > 30m, dan cleanup `subscription.remove()`.
+
 ## Push Notification Integration (`expo-notifications`)
 
 Aplikasi dilengkapi integrasi Push Notification 7 langkah end-to-end:
